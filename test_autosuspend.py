@@ -810,7 +810,7 @@ def test_set_up_checks(mocker):
                        class = Mpd
                        enabled = True''')
 
-    autosuspend.set_up_checks(parser)
+    autosuspend.set_up_checks(parser, 'check', autosuspend.Activity)
 
     mock_class.create.assert_called_once_with('Foo', parser['check.Foo'])
 
@@ -825,8 +825,11 @@ def test_set_up_checks_not_enabled(mocker):
                        class = Mpd
                        enabled = False''')
 
+    autosuspend.set_up_checks(parser, 'check', autosuspend.Activity)
+
     with pytest.raises(autosuspend.ConfigurationError):
-        autosuspend.set_up_checks(parser)
+        autosuspend.set_up_checks(parser, 'check', autosuspend.Activity,
+                                  error_none=True)
 
 
 def test_set_up_checks_no_such_class(mocker):
@@ -835,7 +838,7 @@ def test_set_up_checks_no_such_class(mocker):
                        class = FooBarr
                        enabled = True''')
     with pytest.raises(autosuspend.ConfigurationError):
-        autosuspend.set_up_checks(parser)
+        autosuspend.set_up_checks(parser, 'check', autosuspend.Activity)
 
 
 def test_set_up_checks_not_a_check(mocker):
@@ -848,7 +851,7 @@ def test_set_up_checks_not_a_check(mocker):
                        enabled = True''')
 
     with pytest.raises(autosuspend.ConfigurationError):
-        autosuspend.set_up_checks(parser)
+        autosuspend.set_up_checks(parser, 'check', autosuspend.Activity)
 
     mock_class.create.assert_called_once_with('Foo', parser['check.Foo'])
 
