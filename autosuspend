@@ -49,7 +49,7 @@ class SevereCheckError(RuntimeError):
 
 class Check(object):
     """
-    Base class for checks.
+    Base class for all kinds of checks.
 
     Subclasses must call this class' __init__ method.
     """
@@ -81,10 +81,23 @@ class Check(object):
         self.logger = logging.getLogger(
             'check.{}'.format(self.name))
 
+    def __str__(self):
+        return '{name}[class={clazz}]'.format(name=self.name,
+                                              clazz=self.__class__.__name__)
+
+
+class Activity(Check):
+    """
+    Base class for activity checks.
+
+    Subclasses must call this class' __init__ method.
+    """
+
     @abc.abstractmethod
     def check(self):
         """
-        Performs a check and reports whether suspending shall NOT take place.
+        Performs a check and reports whether there currently is activity and
+        suspending shall NOT take place.
 
         Returns:
             str:
@@ -99,12 +112,8 @@ class Check(object):
         """
         pass
 
-    def __str__(self):
-        return '{name}[class={clazz}]'.format(name=self.name,
-                                              clazz=self.__class__.__name__)
 
-
-class ActiveConnection(Check):
+class ActiveConnection(Activity):
 
     @classmethod
     def create(cls, name, config):
@@ -120,7 +129,7 @@ class ActiveConnection(Check):
             raise ConfigurationError('Ports must be integers')
 
     def __init__(self, name, ports):
-        Check.__init__(self, name)
+        Activity.__init__(self, name)
         self._ports = ports
 
     def check(self):
@@ -136,7 +145,7 @@ class ActiveConnection(Check):
             return 'Ports {} are connected'.format(connected)
 
 
-class ExternalCommand(Check):
+class ExternalCommand(Activity):
 
     @classmethod
     def create(cls, name, config):
@@ -157,7 +166,7 @@ class ExternalCommand(Check):
             return None
 
 
-class Kodi(Check):
+class Kodi(Activity):
 
     @classmethod
     def create(cls, name, config):
@@ -193,7 +202,7 @@ class Kodi(Check):
             raise TemporaryCheckError(error)
 
 
-class Load(Check):
+class Load(Activity):
 
     @classmethod
     def create(cls, name, config):
@@ -218,7 +227,7 @@ class Load(Check):
             return None
 
 
-class Mpd(Check):
+class Mpd(Activity):
 
     @classmethod
     def create(cls, name, config):
@@ -261,7 +270,7 @@ class Mpd(Check):
             raise TemporaryCheckError(error)
 
 
-class NetworkBandwidth(Check):
+class NetworkBandwidth(Activity):
 
     @classmethod
     def create(cls, name, config):
@@ -324,7 +333,7 @@ class NetworkBandwidth(Check):
                         interface, rate_receive, self._threshold_receive)
 
 
-class Ping(Check):
+class Ping(Activity):
     """
     Prevents system sleep in case one or several hosts are reachable via ping.
     """
@@ -354,7 +363,7 @@ class Ping(Check):
         return None
 
 
-class Processes(Check):
+class Processes(Activity):
 
     @classmethod
     def create(cls, name, config):
@@ -381,7 +390,7 @@ class Processes(Check):
         return None
 
 
-class Smb(Check):
+class Smb(Activity):
 
     @classmethod
     def create(cls, name, config):
@@ -413,7 +422,7 @@ class Smb(Check):
             return None
 
 
-class Users(Check):
+class Users(Activity):
 
     @classmethod
     def create(cls, name, config):
@@ -430,7 +439,7 @@ class Users(Check):
                 'Regular expression is invalid: {}'.format(error))
 
     def __init__(self, name, user_regex, terminal_regex, host_regex):
-        Check.__init__(self, name)
+        Activity.__init__(self, name)
         self._user_regex = user_regex
         self._terminal_regex = terminal_regex
         self._host_regex = host_regex
@@ -451,7 +460,7 @@ class Users(Check):
         return None
 
 
-class XIdleTime(Check):
+class XIdleTime(Activity):
     '''
     Checks users with a local X display have been idle for a sufficiently long
     time.
@@ -473,7 +482,7 @@ class XIdleTime(Check):
                 'Unable to parse timeout as int: {}'.format(error))
 
     def __init__(self, name, timeout, ignore_process_re, ignore_users_re):
-        Check.__init__(self, name)
+        Activity.__init__(self, name)
         self._timeout = timeout
         self._ignore_process_re = ignore_process_re
         self._ignore_users_re = ignore_users_re
@@ -560,7 +569,7 @@ class XIdleTime(Check):
         return None
 
 
-class XPath(Check):
+class XPath(Activity):
 
     @classmethod
     def create(cls, name, config):
@@ -578,7 +587,7 @@ class XPath(Check):
                                      ' entry defined for the XPath check')
 
     def __init__(self, name, xpath, url):
-        Check.__init__(self, name)
+        Activity.__init__(self, name)
         self._xpath = xpath
         self._url = url
 
@@ -698,9 +707,9 @@ def set_up_checks(config):
                     class_name))
 
         check = klass.create(name, config[section])
-        if not isinstance(check, Check):
+        if not isinstance(check, Activity):
             raise ConfigurationError(
-                'Check {} is not a correct Check instance'.format(check))
+                'Check {} is not a correct Activity instance'.format(check))
         _logger.debug('Created check instance {}'.format(check))
         configured_checks.append(check)
 

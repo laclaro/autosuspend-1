@@ -791,7 +791,8 @@ def test_configure_logging_file_fallback(mocker):
 
 def test_set_up_checks(mocker):
     mock_class = mocker.patch('autosuspend.Mpd')
-    mock_class.create.return_value = mocker.MagicMock(spec=autosuspend.Check)
+    mock_class.create.return_value = mocker.MagicMock(
+        spec=autosuspend.Activity)
 
     parser = configparser.ConfigParser()
     parser.read_string('''[check.Foo]
@@ -805,7 +806,8 @@ def test_set_up_checks(mocker):
 
 def test_set_up_checks_not_enabled(mocker):
     mock_class = mocker.patch('autosuspend.Mpd')
-    mock_class.create.return_value = mocker.MagicMock(spec=autosuspend.Check)
+    mock_class.create.return_value = mocker.MagicMock(
+        spec=autosuspend.Activity)
 
     parser = configparser.ConfigParser()
     parser.read_string('''[check.Foo]
@@ -847,7 +849,8 @@ class TestExecuteChecks(object):
             [], False, mocker.MagicMock()) is False
 
     def test_matches(self, mocker):
-        matching_check = mocker.MagicMock(spec=autosuspend.Check)
+        matching_check = mocker.MagicMock(
+            spec=autosuspend.Activity)
         matching_check.name = 'foo'
         matching_check.check.return_value = "matches"
         assert autosuspend.execute_checks(
@@ -855,7 +858,8 @@ class TestExecuteChecks(object):
         matching_check.check.assert_called_once_with()
 
     def test_only_first_called(self, mocker):
-        matching_check = mocker.MagicMock(spec=autosuspend.Check)
+        matching_check = mocker.MagicMock(
+            spec=autosuspend.Activity)
         matching_check.name = 'foo'
         matching_check.check.return_value = "matches"
         second_check = mocker.MagicMock()
@@ -870,7 +874,8 @@ class TestExecuteChecks(object):
         second_check.check.assert_not_called()
 
     def test_all_called(self, mocker):
-        matching_check = mocker.MagicMock(spec=autosuspend.Check)
+        matching_check = mocker.MagicMock(
+            spec=autosuspend.Activity)
         matching_check.name = 'foo'
         matching_check.check.return_value = "matches"
         second_check = mocker.MagicMock()
@@ -885,7 +890,8 @@ class TestExecuteChecks(object):
         second_check.check.assert_called_once_with()
 
     def test_ignore_temporary_errors(self, mocker):
-        matching_check = mocker.MagicMock(spec=autosuspend.Check)
+        matching_check = mocker.MagicMock(
+            spec=autosuspend.Activity)
         matching_check.name = 'foo'
         matching_check.check.side_effect = autosuspend.TemporaryCheckError()
         second_check = mocker.MagicMock()
