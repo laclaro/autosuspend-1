@@ -1,10 +1,12 @@
 import configparser
+import http.server
 import logging
 import os.path
 import re
 import socket
 import subprocess
 import sys
+import threading
 import unittest.mock
 
 import psutil
@@ -413,11 +415,20 @@ class TestMpd(object):
 
 class TestNetworkBandwidth(object):
 
-    def test_smoke(self):
+    @pytest.fixture
+    def stub_server(self):
+        server = http.server.HTTPServer(('localhost', 0),
+                                        http.server.SimpleHTTPRequestHandler)
+        threading.Thread(target=server.serve_forever).start()
+        yield server
+        server.shutdown()
+
+    def test_smoke(self, stub_server):
         check = autosuspend.NetworkBandwidth(
             'name', psutil.net_if_addrs().keys(), 0, 0)
         # make some traffic
-        requests.get('https://www.google.de/')
+        requests.get('http://localhost:{}/'.format(
+            stub_server.server_address[1]))
         assert check.check() is not None
 
     @pytest.fixture
