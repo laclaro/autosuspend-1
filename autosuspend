@@ -113,6 +113,34 @@ class Activity(Check):
         pass
 
 
+class Wakeup(Check):
+
+    @abc.abstractmethod
+    def check(self):
+        pass
+
+
+class WakeupFile(Wakeup):
+
+    @classmethod
+    def create(cls, name, config):
+        try:
+            path = config['path']
+            return cls(name, path)
+        except KeyError:
+            raise ConfigurationError('Missing option path')
+
+    def __init__(self, path):
+        self._path = path
+
+    def check(self):
+        try:
+            with open(self._path, 'r') as time_file:
+                return int(time_file.readlines()[0].strip())
+        except (FileNotFoundError, PermissionError, IOError) as error:
+            return TemporaryCheckError(error)
+
+
 class ActiveConnection(Activity):
 
     @classmethod
@@ -618,6 +646,7 @@ def execute_suspend(command):
 
 # pylint: disable=invalid-name
 _checks = []
+_wakeups = []
 # pylint: enable=invalid-name
 
 JUST_WOKE_UP_FILE = '/tmp/autosuspend-just-woke-up'
@@ -817,11 +846,12 @@ def configure_logging(file_or_flag):
 
 
 def main(args=None):
-    global _checks
+    global _checks, _wakeups
     args = parse_arguments(args)
     configure_logging(args.logging)
     config = parse_config(args.config_file)
-    _checks = set_up_checks(config)
+    _checks = set_up_checks(config, 'check', Activity, error_none=True)
+    _wakeups = set_up_checks(config, 'wakeup', Wakeup)
     loop(config.getfloat('general', 'interval', fallback=60),
          config.getfloat('general', 'idle_time', fallback=300),
          functools.partial(execute_suspend,
